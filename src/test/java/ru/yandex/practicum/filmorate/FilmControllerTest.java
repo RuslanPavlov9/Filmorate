@@ -33,7 +33,8 @@ class FilmControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("valid-film.json")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Valid Film"));
+                .andExpect(jsonPath("$.name").value("Valid Film"))
+                .andExpect(jsonPath("$.id").exists());
     }
 
     @Test
@@ -42,7 +43,10 @@ class FilmControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("empty-name.json")))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Название фильма не может быть пустым"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Ошибка при добавлении фильма"))
+                .andExpect(jsonPath("$.message").value("Название фильма не может быть пустым"))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -51,7 +55,9 @@ class FilmControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("long-description.json")))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Описание не может быть длиннее 200 символов"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Ошибка при добавлении фильма"))
+                .andExpect(jsonPath("$.message").value("Описание не может быть длиннее 200 символов"));
     }
 
     @Test
@@ -60,7 +66,9 @@ class FilmControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("missing-release-date.json")))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Дата релиза обязательна"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Ошибка при добавлении фильма"))
+                .andExpect(jsonPath("$.message").value("Дата релиза обязательна"));
     }
 
     @Test
@@ -69,7 +77,9 @@ class FilmControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("early-release-date.json")))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Дата релиза не может быть раньше 28 декабря 1895 года"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Ошибка при добавлении фильма"))
+                .andExpect(jsonPath("$.message").value("Дата релиза не может быть раньше 28 декабря 1895 года"));
     }
 
     @Test
@@ -78,7 +88,9 @@ class FilmControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("negative-duration.json")))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Продолжительность фильма должна быть положительной"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Ошибка при добавлении фильма"))
+                .andExpect(jsonPath("$.message").value("Продолжительность фильма должна быть положительной"));
     }
 
     @Test
@@ -87,22 +99,28 @@ class FilmControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("zero-duration.json")))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Продолжительность фильма должна быть положительной"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Ошибка при добавлении фильма"))
+                .andExpect(jsonPath("$.message").value("Продолжительность фильма должна быть положительной"));
     }
 
     @Test
-    void updateFilm_NonExistingId_Returns400() throws Exception {
+    void updateFilm_NonExistingId_Returns404() throws Exception {
         mockMvc.perform(put("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loadJson("non-existing-id.json")))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Фильм с id 999 не найден"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Ошибка при поиске фильма"))
+                .andExpect(jsonPath("$.message").value("Фильм с id 999 не найден"));
     }
 
     @Test
     void getAllFilms_Returns200() throws Exception {
         mockMvc.perform(get("/films"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
     }
+
 }

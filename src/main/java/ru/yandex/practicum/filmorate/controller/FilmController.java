@@ -1,11 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ErrorResponse;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +32,12 @@ public class FilmController {
             return ResponseEntity.ok(film);
         } catch (ValidationException ex) {
             log.error("Ошибка при добавлении фильма: {}", ex.getMessage());
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Ошибка при добавлении фильма",
+                    ex.getMessage(),
+                    Instant.now().toString()
+            ));
         }
     }
 
@@ -50,10 +58,20 @@ public class FilmController {
             }
             String error = "Фильм с id " + updatedFilm.getId() + " не найден";
             log.warn(error);
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.status(404).body(new ErrorResponse(
+                    HttpStatus.NOT_FOUND.value(),
+                    "Ошибка при поиске фильма",
+                    error,
+                    Instant.now().toString()
+            ));
         } catch (ValidationException ex) {
             log.error("Ошибка при обновлении фильма: {}", ex.getMessage());
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Ошибка при обновлении фильма",
+                    ex.getMessage(),
+                    Instant.now().toString()
+            ));
         }
     }
 
@@ -84,7 +102,7 @@ public class FilmController {
             log.warn("Валидация фильма не пройдена: {}", error);
             throw new ValidationException(error);
         }
-        if (film.getDuration() == null || film.getDuration().isNegative() || film.getDuration().isZero()) {
+        if (film.getDuration() <= 0) {
             String error = "Продолжительность фильма должна быть положительной";
             log.warn("Валидация фильма не пройдена: {}", error);
             throw new ValidationException(error);

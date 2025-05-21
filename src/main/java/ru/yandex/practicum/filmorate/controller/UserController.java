@@ -1,11 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ErrorResponse;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +34,12 @@ public class UserController {
             return ResponseEntity.ok(user);
         } catch (ValidationException ex) {
             log.error("Ошибка при создании пользователя: {}", ex.getMessage());
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Ошибка при создании пользователя",
+                    ex.getMessage(),
+                    Instant.now().toString()
+            ));
         }
     }
 
@@ -52,10 +60,21 @@ public class UserController {
             }
             String error = "Пользователь с id " + updatedUser.getId() + " не найден";
             log.warn(error);
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(
+                            HttpStatus.NOT_FOUND.value(),
+                            "Пользователь не найден",
+                            error,
+                            Instant.now().toString()
+                    ));
         } catch (ValidationException ex) {
             log.error("Ошибка при обновлении пользователя: {}", ex.getMessage());
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Ошибка валидации",
+                    ex.getMessage(),
+                    Instant.now().toString()
+            ));
         }
     }
 
@@ -67,30 +86,19 @@ public class UserController {
 
     private void validateUser(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank()) {
-            String error = "Email не может быть пустым";
-            log.warn("Валидация пользователя не пройдена: {}", error);
-            throw new ValidationException(error);
+            throw new ValidationException("Email не может быть пустым");
         }
         if (!user.getEmail().contains("@")) {
-            String error = "Email должен содержать символ @";
-            log.warn("Валидация пользователя не пройдена: {}", error);
-            throw new ValidationException(error);
+            throw new ValidationException("Email должен содержать символ @");
         }
         if (user.getLogin() == null || user.getLogin().isBlank()) {
-            String error = "Логин не может быть пустым";
-            log.warn("Валидация пользователя не пройдена: {}", error);
-            throw new ValidationException(error);
+            throw new ValidationException("Логин не может быть пустым");
         }
         if (user.getLogin().contains(" ")) {
-            String error = "Логин не может содержать пробелы";
-            log.warn("Валидация пользователя не пройдена: {}", error);
-            throw new ValidationException(error);
+            throw new ValidationException("Логин не может содержать пробелы");
         }
         if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            String error = "Дата рождения не может быть в будущем";
-            log.warn("Валидация пользователя не пройдена: {}", error);
-            throw new ValidationException(error);
+            throw new ValidationException("Дата рождения не может быть в будущем");
         }
     }
-
 }
