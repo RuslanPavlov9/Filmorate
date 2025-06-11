@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleNotFoundException(NotFoundException ex) {
         return new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                "Not found",
+                "Не найдено",
                 ex.getMessage(),
                 Instant.now().toString()
         );
