@@ -136,7 +136,7 @@ class UserControllerTest {
                         .content(nonExistingIdJson))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not found"))
+                .andExpect(jsonPath("$.error").value("Не найдено"))
                 .andExpect(jsonPath("$.message").value("Пользователь не найден"));
     }
 
@@ -145,6 +145,6 @@ class UserControllerTest {
         mockMvc.perform(get("/users/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not found"));
+                .andExpect(jsonPath("$.error").value("Не найдено"));
     }
 }
