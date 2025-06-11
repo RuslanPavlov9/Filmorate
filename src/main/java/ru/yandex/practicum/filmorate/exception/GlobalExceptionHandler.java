@@ -32,6 +32,17 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(LikeNotFoundException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleLikeNotFoundException(LikeNotFoundException ex) {
+        return new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Лайк не найден",
+                ex.getMessage(),
+                Instant.now().toString()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleOtherExceptions(Exception ex) {
