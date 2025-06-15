@@ -24,8 +24,8 @@ public class UserService {
     public void addFriend(int userId, int friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
+        user.getFriends().put(friendId,"подтверждённая");
+        friend.getFriends().put(userId, "подтверждённая");
     }
 
     public void removeFriend(int userId, int friendId) {
@@ -38,7 +38,7 @@ public class UserService {
     public List<User> getFriends(int userId) {
         User user = getUserById(userId);
         List<User> friends = new ArrayList<>();
-        for (Integer friendId : user.getFriends()) {
+        for (Integer friendId : user.getFriends().keySet()) {
             friends.add(getUserById(friendId));
         }
         return friends;
@@ -48,8 +48,8 @@ public class UserService {
         User user = getUserById(userId);
         User otherUser = getUserById(otherId);
 
-        Set<Integer> commonFriendIds = new HashSet<>(user.getFriends());
-        commonFriendIds.retainAll(otherUser.getFriends());
+        Set<Integer> commonFriendIds = new HashSet<>(user.getFriends().keySet());
+        commonFriendIds.retainAll(otherUser.getFriends().keySet());
 
         List<User> commonFriends = new ArrayList<>();
         for (Integer friendId : commonFriendIds) {
