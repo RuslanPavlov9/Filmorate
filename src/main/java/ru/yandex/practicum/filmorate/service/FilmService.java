@@ -1,12 +1,17 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.repository.dao.Film;
+import ru.yandex.practicum.filmorate.repository.dao.Like;
+import ru.yandex.practicum.filmorate.repository.dao.User;
+import ru.yandex.practicum.filmorate.repository.FilmRepository;
+import ru.yandex.practicum.filmorate.repository.LikeRepository;
+import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -14,52 +19,74 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class FilmService {
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
-    private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
 
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-    }
+    private final FilmRepository filmRepository;
+    private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
+    private final FilmMapper filmMapper;
 
+    @Transactional
     public void addLike(int filmId, int userId) {
         Film film = getFilmById(filmId);
-        userStorage.getUserById(userId);
-        film.getLikes().add(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+
+        if (likeRepository.existsByFilmAndUser(film, user)) {
+            throw new ValidationException("Пользователь уже поставил лайк этому фильму");
+        }
+
+        Like like = new Like();
+        like.setFilm(film);
+        like.setUser(user);
+        likeRepository.save(like);
     }
 
+    @Transactional
     public void removeLike(int filmId, int userId) {
         Film film = getFilmById(filmId);
-        if (!film.getLikes().remove(userId)) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
+
+        if (!likeRepository.existsByFilmAndUser(film, user)) {
             throw new NotFoundException("Лайк не найден");
         }
+
+        likeRepository.deleteByFilmAndUser(film, user);
     }
 
+    @Transactional(readOnly = true)
     public List<Film> getPopularFilms(int count) {
-        List<Film> allFilms = filmStorage.getAllFilms();
-        allFilms.sort(Comparator.comparingInt(f -> -f.getLikes().size()));
-        return allFilms.stream().limit(count).collect(Collectors.toList());
+        return filmRepository.findPopularFilms(count);
     }
 
+    @Transactional
     public Film addFilm(Film film) {
         validateFilm(film);
-        return filmStorage.addFilm(film);
+        return filmRepository.save(film);
     }
 
+    @Transactional
     public Film updateFilm(Film film) {
         validateFilm(film);
-        return filmStorage.updateFilm(film);
+        if (!filmRepository.existsById(film.getId())) {
+            throw new NotFoundException("Фильм с id=" + film.getId() + " не найден");
+        }
+        return filmRepository.save(film);
     }
 
+    @Transactional(readOnly = true)
     public List<Film> getAllFilms() {
-        return filmStorage.getAllFilms();
+        return filmRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Film getFilmById(int id) {
-        return filmStorage.getFilmById(id);
+        Film film = filmRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Фильм с id=" + id + " не найден"));
+        return filmRepository.getOne(id);
     }
 
     private void validateFilm(Film film) {

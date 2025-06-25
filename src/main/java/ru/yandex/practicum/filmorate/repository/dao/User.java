@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.repository.dao;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.repository.dao;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,10 +17,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 @Entity
 @Table(name = "films")
@@ -44,7 +42,7 @@ public class Film {
     @Column
     private int duration;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mpa_id", nullable = false)
     private Mpa mpa;
 
@@ -54,13 +52,9 @@ public class Film {
             joinColumns = @JoinColumn(name = "film_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
-    private Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+    private Set<Genre> genres = new HashSet<>();
 
-    @OneToMany(mappedBy = "film", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "film", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Like> likes = new HashSet<>();
-
-    public int getLikesCount() {
-        return likes.size();
-    }
 
 }

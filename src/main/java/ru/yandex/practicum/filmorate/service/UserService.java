@@ -1,85 +1,149 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.repository.dao.Friendship;
+import ru.yandex.practicum.filmorate.repository.dao.User;
+import ru.yandex.practicum.filmorate.repository.FriendshipRepository;
+import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
+    private final FriendshipRepository friendshipRepository;
 
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
-
+    @Transactional
     public void addFriend(int userId, int friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
-        user.getFriends().put(friendId,"подтверждённая");
-        friend.getFriends().put(userId, "подтверждённая");
+
+        if (user.equals(friend)) {
+            throw new ValidationException("Пользователь не может добавить в друзья самого себя");
+        }
+
+        boolean friendshipExists = friendshipRepository.existsByUserAndFriend(user, friend) ||
+                friendshipRepository.existsByUserAndFriend(friend, user);
+
+        if (friendshipExists) {
+            throw new ValidationException(String.format("Дружба между %s и %s уже существует",
+                    user.getName(), friend.getName()));
+        }
+
+        Optional<Friendship> reverseFriendship = friendshipRepository.findByUserAndFriend(friend, user);
+
+        if (reverseFriendship.isPresent()) {
+            Friendship userToFriend = new Friendship(user, friend, "подтверждённая");
+            friendshipRepository.save(userToFriend);
+
+            Friendship existing = reverseFriendship.get();
+            existing.setStatus("подтверждённая");
+            friendshipRepository.save(existing);
+        } else {
+            Friendship newFriendship = new Friendship(user, friend, "неподтверждённая");
+            friendshipRepository.save(newFriendship);
+        }
     }
 
+    @Transactional
     public void removeFriend(int userId, int friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
+
+        // Проверяем существование дружбы
+        if (!friendshipRepository.existsByUserAndFriend(user, friend)) {
+            throw new NotFoundException(String.format(
+                    "Пользователь %s не имеет в друзьях %s",
+                    user.getName(),
+                    friend.getName()
+            ));
+        }
+
+        // Получаем обе записи о дружбе
+        Optional<Friendship> userToFriend = friendshipRepository.findByUserAndFriend(user, friend);
+        Optional<Friendship> friendToUser = friendshipRepository.findByUserAndFriend(friend, user);
+
+        // Если дружба была подтверждённой, меняем статус на "неподтверждённая" у обратной связи
+        if (userToFriend.isPresent() && userToFriend.get().getStatus().equals("подтверждённая") &&
+                friendToUser.isPresent() && friendToUser.get().getStatus().equals("подтверждённая")) {
+
+            // Удаляем прямую связь
+            friendshipRepository.delete(userToFriend.get());
+
+            // Оставляем обратную связь, но меняем статус
+            Friendship remainingFriendship = friendToUser.get();
+            remainingFriendship.setStatus("неподтверждённая");
+            friendshipRepository.save(remainingFriendship);
+
+        } else {
+            // Если дружба не подтверждена, просто удаляем обе записи
+            userToFriend.ifPresent(friendshipRepository::delete);
+            friendToUser.ifPresent(friendshipRepository::delete);
+        }
     }
 
+    @Transactional(readOnly = true)
     public List<User> getFriends(int userId) {
         User user = getUserById(userId);
-        List<User> friends = new ArrayList<>();
-        for (Integer friendId : user.getFriends().keySet()) {
-            friends.add(getUserById(friendId));
-        }
-        return friends;
+        return friendshipRepository.findByUser(user).stream()
+                .map(Friendship::getFriend)
+                .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<User> getCommonFriends(int userId, int otherId) {
         User user = getUserById(userId);
         User otherUser = getUserById(otherId);
 
-        Set<Integer> commonFriendIds = new HashSet<>(user.getFriends().keySet());
-        commonFriendIds.retainAll(otherUser.getFriends().keySet());
+        Set<Integer> userFriends = friendshipRepository.findByUser(user).stream()
+                .map(f -> f.getFriend().getId())
+                .collect(Collectors.toSet());
 
-        List<User> commonFriends = new ArrayList<>();
-        for (Integer friendId : commonFriendIds) {
-            commonFriends.add(getUserById(friendId));
-        }
-        return commonFriends;
+        return friendshipRepository.findByUser(otherUser).stream()
+                .map(Friendship::getFriend)
+                .filter(friend -> userFriends.contains(friend.getId()))
+                .collect(Collectors.toList());
     }
 
+    @Transactional
     public User addUser(User user) {
         validateUser(user);
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        return userStorage.addUser(user);
+        return userRepository.save(user);
     }
 
+    @Transactional
     public User updateUser(User user) {
         validateUser(user);
+        if (!userRepository.existsById(user.getId())) {
+            throw new NotFoundException("Пользователь с id=" + user.getId() + " не найден");
+        }
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        return userStorage.updateUser(user);
+        return userRepository.save(user);
     }
 
+    @Transactional(readOnly = true)
     public List<User> getAllUsers() {
-        return userStorage.getAllUsers();
+        return userRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public User getUserById(int id) {
-        return userStorage.getUserById(id);
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден"));
     }
 
     private void validateUser(User user) {
