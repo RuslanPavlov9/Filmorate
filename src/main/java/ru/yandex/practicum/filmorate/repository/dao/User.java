@@ -38,24 +38,13 @@ public class User {
     @Column
     private LocalDate birthday;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    //@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Friendship> friendships = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    //@OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private Set<Like> likes = new HashSet<>();
 
-    public void addFriend(User friend, String status) {
-        if (this.equals(friend)) {
-            throw new IllegalArgumentException("Пользователь не может добавить в друзья сам себя.");
-        }
-        Friendship friendship = new Friendship(this, friend, status);
-        friendships.add(friendship);
-        friend.getFriendships().add(new Friendship(friend, this, status));
-    }
-
-    public void removeFriend(User friend) {
-        friendships.removeIf(fs -> fs.getFriend().equals(friend));
-        friend.getFriendships().removeIf(fs -> fs.getFriend().equals(this));
-    }
 
 }

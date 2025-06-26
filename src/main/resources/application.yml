@@ -3,8 +3,8 @@ logging:
     org.zalando.logbook: TRACE
 spring:
   datasource:
-#    url: jdbc:h2:file:./data/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
-    url: jdbc:h2:mem:filmorate_db;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:file:./data/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+#    url: jdbc:h2:mem:filmorate_db;DB_CLOSE_DELAY=-1
     username: sa
     password: ""
     driver-class-name: org.h2.Driver
@@ -12,18 +12,19 @@ spring:
     console:
       enabled: true # Включает веб-интерфейс H2 Console
       path: /h2-console # URL для доступа
-      settings:
-        trace: false
-        web-allow-others: false
   jpa:
 #    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
     show-sql: true # Показывать SQL в логах (для отладки)
     properties:
       hibernate.format_sql: true # Красивое форматирование SQL
-    open-in-view: false
+#    open-in-view: false
 
   sql:
     init:
-      mode: always
+      mode: always  # Всегда выполнять инициализацию
+      platform: h2  # Указываем платформу (не обязательно)
+      encoding: UTF-8  # Кодировка скриптов
+      separator: ;    # Разделитель SQL-команд
+      continue-on-error: false  # Прекращать при ошибке

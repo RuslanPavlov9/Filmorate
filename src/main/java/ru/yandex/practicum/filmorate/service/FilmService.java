@@ -6,7 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.repository.GenreRepository;
 import ru.yandex.practicum.filmorate.repository.dao.Film;
+import ru.yandex.practicum.filmorate.repository.dao.Genre;
 import ru.yandex.practicum.filmorate.repository.dao.Like;
 import ru.yandex.practicum.filmorate.repository.dao.User;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
@@ -14,8 +16,8 @@ import ru.yandex.practicum.filmorate.repository.LikeRepository;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,7 +28,8 @@ public class FilmService {
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
-    private final FilmMapper filmMapper;
+    //private final FilmMapper filmMapper;
+    private final GenreRepository genreRepository;
 
     @Transactional
     public void addLike(int filmId, int userId) {
@@ -84,7 +87,7 @@ public class FilmService {
 
     @Transactional(readOnly = true)
     public Film getFilmById(int id) {
-        Film film = filmRepository.findById(id)
+       filmRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм с id=" + id + " не найден"));
         return filmRepository.getOne(id);
     }
@@ -102,5 +105,31 @@ public class FilmService {
         if (film.getDuration() <= 0) {
             throw new ValidationException("Продолжительность фильма должна быть положительной");
         }
+        // Проверка MPA (если нужно)
+        if (film.getMpa() == null || film.getMpa().getId() == 0) {
+            throw new ValidationException("MPA рейтинг должен быть указан");
+        }
+
+        // Проверка жанров
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            Set<Integer> genreIds = film.getGenres().stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toSet());
+
+            List<Integer> existingIds = genreRepository.findAllById(genreIds)
+                    .stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toList());
+
+            // Находим ID жанров, которых нет в базе
+            Set<Integer> missingIds = genreIds.stream()
+                    .filter(id -> !existingIds.contains(id))
+                    .collect(Collectors.toSet());
+
+            if (!missingIds.isEmpty()) {
+                throw new ValidationException("Следующие ID жанров не существуют: " + missingIds);
+            }
+        }
     }
+
 }
