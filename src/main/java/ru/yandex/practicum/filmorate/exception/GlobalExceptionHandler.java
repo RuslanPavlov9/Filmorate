@@ -25,8 +25,19 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(NotFoundException ex) {
         return new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Не найдено",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal server error",
+                ex.getMessage(),
+                Instant.now().toString()
+        );
+    }
+
+    @ExceptionHandler(NotFoundForDeleteException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public ErrorResponse handleNotFoundUserForDeleteException(NotFoundForDeleteException ex) {
+        return new ErrorResponse(
+                HttpStatus.OK.value(),
+                "Уже удален",
                 ex.getMessage(),
                 Instant.now().toString()
         );

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.NotFoundForDeleteException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.repository.dao.Friendship;
 import ru.yandex.practicum.filmorate.repository.dao.User;
@@ -47,7 +48,7 @@ public class UserService {
         User friend = getUserById(friendId);
 
         Friendship friendship = friendshipRepository.findByUserAndFriend(user, friend)
-                .orElseThrow(() -> new NotFoundException(String.format(
+                .orElseThrow(() -> new NotFoundForDeleteException(String.format(
                         "Пользователь %s не имеет в друзьях %s",
                         user.getName(),
                         friend.getName()
