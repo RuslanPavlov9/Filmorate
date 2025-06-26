@@ -16,9 +16,6 @@ public class UserMapper {
         dto.setLogin(user.getLogin());
         dto.setName(user.getName());
         dto.setBirthday(user.getBirthday());
-        dto.setFriendIds(user.getFriendships().stream()
-                .map(f -> f.getFriend().getId())
-                .collect(Collectors.toSet()));
         return dto;
     }
 

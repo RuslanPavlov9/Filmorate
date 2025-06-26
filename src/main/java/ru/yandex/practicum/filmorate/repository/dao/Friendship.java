@@ -31,12 +31,8 @@ public class Friendship {
     @JoinColumn(name = "friend_id", nullable = false)
     private User friend;
 
-    @Column(nullable = false)
-    private String status; // "подтвержденная", "неподтвержденная"
-
-    public Friendship(User user, User friend, String status) {
+    public Friendship(User user, User friend) {
         this.user = user;
         this.friend = friend;
-        this.status = status;
     }
 }

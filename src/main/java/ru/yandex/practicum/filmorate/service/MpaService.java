@@ -14,7 +14,7 @@ public class MpaService {
     private final MpaRepository mpaRepository;
 
     public List<Mpa> getAllMpa() {
-        return mpaRepository.findAll();
+        return mpaRepository.findAllByOrderByIdAsc();
     }
 
     public Mpa getMpaById(int id) {

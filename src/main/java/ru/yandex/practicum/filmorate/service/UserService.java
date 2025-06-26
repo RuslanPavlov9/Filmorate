@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,27 +30,15 @@ public class UserService {
             throw new ValidationException("Пользователь не может добавить в друзья самого себя");
         }
 
-        boolean friendshipExists = friendshipRepository.existsByUserAndFriend(user, friend) ||
-                friendshipRepository.existsByUserAndFriend(friend, user);
-
-        if (friendshipExists) {
-            throw new ValidationException(String.format("Дружба между %s и %s уже существует",
-                    user.getName(), friend.getName()));
+        if (friendshipRepository.existsByUserAndFriend(user, friend)) {
+            throw new ValidationException(String.format("Пользователь %s уже имеет в друзьях %s",
+                    user.getName(),
+                    friend.getName()));
         }
 
-        Optional<Friendship> reverseFriendship = friendshipRepository.findByUserAndFriend(friend, user);
+        Friendship friendship = new Friendship(user, friend);
 
-        if (reverseFriendship.isPresent()) {
-            Friendship userToFriend = new Friendship(user, friend, "подтверждённая");
-            friendshipRepository.save(userToFriend);
-
-            Friendship existing = reverseFriendship.get();
-            existing.setStatus("подтверждённая");
-            friendshipRepository.save(existing);
-        } else {
-            Friendship newFriendship = new Friendship(user, friend, "неподтверждённая");
-            friendshipRepository.save(newFriendship);
-        }
+        friendshipRepository.save(friendship);
     }
 
     @Transactional
@@ -59,36 +46,14 @@ public class UserService {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
 
-        // Проверяем существование дружбы
-        if (!friendshipRepository.existsByUserAndFriend(user, friend)) {
-            throw new NotFoundException(String.format(
-                    "Пользователь %s не имеет в друзьях %s",
-                    user.getName(),
-                    friend.getName()
-            ));
-        }
+        Friendship friendship = friendshipRepository.findByUserAndFriend(user, friend)
+                .orElseThrow(() -> new NotFoundException(String.format(
+                        "Пользователь %s не имеет в друзьях %s",
+                        user.getName(),
+                        friend.getName()
+                )));
 
-        // Получаем обе записи о дружбе
-        Optional<Friendship> userToFriend = friendshipRepository.findByUserAndFriend(user, friend);
-        Optional<Friendship> friendToUser = friendshipRepository.findByUserAndFriend(friend, user);
-
-        // Если дружба была подтверждённой, меняем статус на "неподтверждённая" у обратной связи
-        if (userToFriend.isPresent() && userToFriend.get().getStatus().equals("подтверждённая") &&
-                friendToUser.isPresent() && friendToUser.get().getStatus().equals("подтверждённая")) {
-
-            // Удаляем прямую связь
-            friendshipRepository.delete(userToFriend.get());
-
-            // Оставляем обратную связь, но меняем статус
-            Friendship remainingFriendship = friendToUser.get();
-            remainingFriendship.setStatus("неподтверждённая");
-            friendshipRepository.save(remainingFriendship);
-
-        } else {
-            // Если дружба не подтверждена, просто удаляем обе записи
-            userToFriend.ifPresent(friendshipRepository::delete);
-            friendToUser.ifPresent(friendshipRepository::delete);
-        }
+        friendshipRepository.delete(friendship);
     }
 
     @Transactional(readOnly = true)
@@ -104,12 +69,11 @@ public class UserService {
         User user = getUserById(userId);
         User otherUser = getUserById(otherId);
 
-        Set<Integer> userFriends = friendshipRepository.findByUser(user).stream()
-                .map(f -> f.getFriend().getId())
+        Set<Integer> userFriends = getFriends(user.getId()).stream()
+                .map(User::getId)
                 .collect(Collectors.toSet());
 
-        return friendshipRepository.findByUser(otherUser).stream()
-                .map(Friendship::getFriend)
+        return getFriends(otherUser.getId()).stream()
                 .filter(friend -> userFriends.contains(friend.getId()))
                 .collect(Collectors.toList());
     }

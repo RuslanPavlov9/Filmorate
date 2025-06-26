@@ -1,18 +1,31 @@
 -- Заполнение таблицы MPA
+-- MERGE INTO mpa (id, name) VALUES (1, 'G');
+-- MERGE INTO mpa (id, name) VALUES (2, 'PG-13');
+-- MERGE INTO mpa (id, name) VALUES (3, 'R');
+-- MERGE INTO mpa (id, name) VALUES (4, 'NC-17');
+-- MERGE INTO mpa (id, name) VALUES (5, 'PG');
+
+-- Заполнение таблицы MPA
 MERGE INTO mpa (id, name) VALUES (1, 'G');
 MERGE INTO mpa (id, name) VALUES (2, 'PG');
 MERGE INTO mpa (id, name) VALUES (3, 'PG-13');
 MERGE INTO mpa (id, name) VALUES (4, 'R');
 MERGE INTO mpa (id, name) VALUES (5, 'NC-17');
-
 -- Заполнение таблицы жанров
+-- MERGE INTO genres (id, name) VALUES (1, 'Триллер');
+-- MERGE INTO genres (id, name) VALUES (2, 'Драма');
+-- MERGE INTO genres (id, name) VALUES (3, 'Мультфильм');
+-- MERGE INTO genres (id, name) VALUES (4, 'Боевик');
+-- MERGE INTO genres (id, name) VALUES (5, 'Документальный');
+-- MERGE INTO genres (id, name) VALUES (6, 'Комедия');
+
+-- Заполнение таблицы жанров в порядке, ожидаемом тестами
 MERGE INTO genres (id, name) VALUES (1, 'Комедия');
 MERGE INTO genres (id, name) VALUES (2, 'Драма');
 MERGE INTO genres (id, name) VALUES (3, 'Мультфильм');
 MERGE INTO genres (id, name) VALUES (4, 'Триллер');
 MERGE INTO genres (id, name) VALUES (5, 'Документальный');
 MERGE INTO genres (id, name) VALUES (6, 'Боевик');
-
 -- -- Заполнение таблицы пользователей
 -- MERGE INTO users (id, email, login, name, birthday)
 --     VALUES (1, 'user1@example.com', 'user1', 'Иван Иванов', '1990-01-01');

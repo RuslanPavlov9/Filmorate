@@ -14,7 +14,7 @@ public class GenreService {
     private final GenreRepository genreRepository;
 
     public List<Genre> getAllGenres() {
-        return genreRepository.findAll();
+        return genreRepository.findAllByOrderByIdAsc();
     }
 
     public Genre getGenreById(int id) {

@@ -42,7 +42,6 @@ public class Film {
     @Column
     private int duration;
 
-    //@ManyToOne
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "mpa_id", nullable = false)
     private Mpa mpa;
@@ -55,7 +54,6 @@ public class Film {
     )
     private Set<Genre> genres = new HashSet<>();
     @OneToMany(mappedBy = "film", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    //@OneToMany(mappedBy = "film", cascade = CascadeType.ALL)
     private Set<Like> likes = new HashSet<>();
 
 }

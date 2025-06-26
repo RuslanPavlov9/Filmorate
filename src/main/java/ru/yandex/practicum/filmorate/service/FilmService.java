@@ -6,14 +6,11 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.repository.GenreRepository;
+import ru.yandex.practicum.filmorate.repository.*;
 import ru.yandex.practicum.filmorate.repository.dao.Film;
 import ru.yandex.practicum.filmorate.repository.dao.Genre;
 import ru.yandex.practicum.filmorate.repository.dao.Like;
 import ru.yandex.practicum.filmorate.repository.dao.User;
-import ru.yandex.practicum.filmorate.repository.FilmRepository;
-import ru.yandex.practicum.filmorate.repository.LikeRepository;
-import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,7 +25,7 @@ public class FilmService {
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
-    //private final FilmMapper filmMapper;
+    private final MpaRepository mpaRepository;
     private final GenreRepository genreRepository;
 
     @Transactional
@@ -87,9 +84,8 @@ public class FilmService {
 
     @Transactional(readOnly = true)
     public Film getFilmById(int id) {
-       filmRepository.findById(id)
+        return filmRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм с id=" + id + " не найден"));
-        return filmRepository.getOne(id);
     }
 
     private void validateFilm(Film film) {
@@ -106,8 +102,15 @@ public class FilmService {
             throw new ValidationException("Продолжительность фильма должна быть положительной");
         }
         // Проверка MPA (если нужно)
-        if (film.getMpa() == null || film.getMpa().getId() == 0) {
-            throw new ValidationException("MPA рейтинг должен быть указан");
+//        if (film.getMpa() == null || film.getMpa().getId() == 0) {
+//            throw new ValidationException("MPA рейтинг должен быть указан");
+//        }
+
+        if (film.getMpa() != null) {
+            int mpaId = film.getMpa().getId();
+            if (!mpaRepository.existsById(mpaId)) {
+                throw new NotFoundException("MPA рейтинг с id=" + mpaId + " не существует");
+            }
         }
 
         // Проверка жанров
@@ -127,7 +130,7 @@ public class FilmService {
                     .collect(Collectors.toSet());
 
             if (!missingIds.isEmpty()) {
-                throw new ValidationException("Следующие ID жанров не существуют: " + missingIds);
+                throw new NotFoundException("Следующие ID жанров не существуют: " + missingIds);
             }
         }
     }
