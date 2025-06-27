@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.repository.*;
 import ru.yandex.practicum.filmorate.repository.dao.Film;
 import ru.yandex.practicum.filmorate.repository.dao.Genre;
@@ -101,10 +100,6 @@ public class FilmService {
         if (film.getDuration() <= 0) {
             throw new ValidationException("Продолжительность фильма должна быть положительной");
         }
-        // Проверка MPA (если нужно)
-//        if (film.getMpa() == null || film.getMpa().getId() == 0) {
-//            throw new ValidationException("MPA рейтинг должен быть указан");
-//        }
 
         if (film.getMpa() != null) {
             int mpaId = film.getMpa().getId();
@@ -113,7 +108,6 @@ public class FilmService {
             }
         }
 
-        // Проверка жанров
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             Set<Integer> genreIds = film.getGenres().stream()
                     .map(Genre::getId)
@@ -124,7 +118,6 @@ public class FilmService {
                     .map(Genre::getId)
                     .collect(Collectors.toList());
 
-            // Находим ID жанров, которых нет в базе
             Set<Integer> missingIds = genreIds.stream()
                     .filter(id -> !existingIds.contains(id))
                     .collect(Collectors.toSet());

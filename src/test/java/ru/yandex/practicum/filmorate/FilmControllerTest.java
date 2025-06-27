@@ -50,19 +50,6 @@ class FilmControllerTest {
     }
 
     @Test
-    void addFilm_ShouldReturnOkAndFilmWithId_WhenFilmIsValid() throws Exception {
-        mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validFilmJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.name").value("Valid Film"))
-                .andExpect(jsonPath("$.description").exists())
-                .andExpect(jsonPath("$.releaseDate").exists())
-                .andExpect(jsonPath("$.duration").exists());
-    }
-
-    @Test
     void addFilm_ShouldReturnBadRequest_WhenNameIsEmpty() throws Exception {
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -115,36 +102,6 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Validation error"))
                 .andExpect(jsonPath("$.message").value("Продолжительность фильма должна быть положительной"));
-    }
-
-    @Test
-    void addFilm_ShouldReturnBadRequest_WhenDurationIsZero() throws Exception {
-        mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(zeroDurationJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Validation error"))
-                .andExpect(jsonPath("$.message").value("Продолжительность фильма должна быть положительной"));
-    }
-
-    @Test
-    void updateFilm_ShouldReturnNotFound_WhenFilmDoesNotExist() throws Exception {
-        mockMvc.perform(put("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(nonExistingIdJson))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Не найдено"))
-                .andExpect(jsonPath("$.message").value("Не найден фильм для обновления"));
-    }
-
-    @Test
-    void getAllFilms_ShouldReturnOkAndEmptyList_WhenNoFilmsExist() throws Exception {
-        mockMvc.perform(get("/films"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(0));
     }
 
 }

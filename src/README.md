@@ -137,3 +137,73 @@ id	name	release_date	duration	mpa_rating
 2	Ирония судьбы	1975-12-31	184	PG
 3	Легенда №17	2013-04-18	134	PG-13
 ```
+
+
+
+```sql
+Table mpa {
+id integer [primary key, increment]
+name varchar(50) [not null, unique]
+}
+
+Table genres {
+id integer [primary key, increment]
+name varchar(50) [not null, unique]
+}
+
+Table users {
+id integer [primary key, increment]
+email varchar(100) [not null, unique]
+login varchar(50) [not null]
+name varchar(100) [not null]
+birthday date
+}
+
+Table films {
+id integer [primary key, increment]
+name varchar(100) [not null]
+description varchar(200)
+release_date date
+duration integer
+mpa_id integer [not null]
+}
+
+Table film_genres {
+film_id integer [not null]
+genre_id integer [not null]
+}
+
+Table friends {
+id integer [primary key, increment]
+user_id integer [not null]
+friend_id integer [not null]
+Indexes {
+(user_id, friend_id) [unique]
+}
+}
+
+Table likes {
+id integer [primary key, increment]
+film_id integer [not null]
+user_id integer [not null]
+created_date timestamp [not null]
+Indexes {
+(film_id, user_id) [unique]
+film_id
+user_id
+}
+}
+
+// Связи между таблицами
+Ref: films.mpa_id > mpa.id
+
+Ref: film_genres.film_id > films.id
+Ref: film_genres.genre_id > genres.id
+
+Ref: friends.user_id > users.id
+Ref: friends.friend_id > users.id
+
+Ref: likes.film_id > films.id
+Ref: likes.user_id > users.id 
+
+```
