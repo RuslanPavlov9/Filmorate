@@ -31,20 +31,9 @@ class GenreServiceIntegrationTest {
 
     @Test
     void getAllGenres_shouldReturnGenresOrderedById() {
-        // Arrange
-//        Genre genre1 = new Genre(1, "Комедия");
-//        Genre genre2 = new Genre(2, "Драма");
-//        Genre genre3 = new Genre(3, "Мультфильм");
-//
-//        entityManager.persist(genre2);
-//        entityManager.persist(genre3);
-//        entityManager.persist(genre1);
-//        entityManager.flush();
 
-        // Act
         List<Genre> result = genreService.getAllGenres();
 
-        // Assert
         assertNotNull(result);
         assertEquals(6, result.size());
         assertEquals(1, result.get(0).getId());
@@ -54,15 +43,10 @@ class GenreServiceIntegrationTest {
 
     @Test
     void getGenreById_shouldReturnGenre_whenExists() {
-        // Arrange
         Genre expected = new Genre(1, "Комедия");
-//        entityManager.persist(expected);
-//        entityManager.flush();
 
-        // Act
         Genre result = genreService.getGenreById(1);
 
-        // Assert
         assertNotNull(result);
         assertEquals(expected.getId(), result.getId());
         assertEquals(expected.getName(), result.getName());
@@ -70,10 +54,8 @@ class GenreServiceIntegrationTest {
 
     @Test
     void getGenreById_shouldThrowNotFoundException_whenNotExists() {
-        // Arrange
         int nonExistingId = 999;
 
-        // Act & Assert
         assertThrows(NotFoundException.class, () -> genreService.getGenreById(nonExistingId));
     }
 

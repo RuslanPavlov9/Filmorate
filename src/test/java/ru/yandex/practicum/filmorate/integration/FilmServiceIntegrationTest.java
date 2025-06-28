@@ -39,14 +39,12 @@ class FilmServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Очищаем данные, которые могут мешать (кроме справочников)
         entityManager.createNativeQuery("DELETE FROM likes").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM film_genres").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM films").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
         entityManager.flush();
 
-        // Создаем тестового пользователя
         testUser = new User();
         testUser.setEmail("user@example.com");
         testUser.setLogin("userlogin");
@@ -54,13 +52,10 @@ class FilmServiceIntegrationTest {
         testUser.setBirthday(LocalDate.of(1990, 1, 1));
         entityManager.persist(testUser);
 
-        // Получаем MPA PG-13 (id=3) из справочника
         Mpa mpa = entityManager.find(Mpa.class, 3);
 
-        // Получаем жанр "Комедия" (id=1) из справочника
         Genre genre = entityManager.find(Genre.class, 1);
 
-        // Создаем тестовый фильм
         testFilm = new Film();
         testFilm.setName("Test Film");
         testFilm.setDescription("Test Description");
@@ -75,10 +70,9 @@ class FilmServiceIntegrationTest {
 
     @Test
     void addFilm_shouldSaveFilmWithValidData() {
-        // Получаем MPA PG (id=2) из справочника
+
         Mpa mpa = entityManager.find(Mpa.class, 2);
 
-        // Получаем жанр "Драма" (id=2) из справочника
         Genre genre = entityManager.find(Genre.class, 2);
 
         Film newFilm = new Film();
@@ -93,7 +87,7 @@ class FilmServiceIntegrationTest {
 
         assertNotNull(savedFilm.getId());
         assertEquals("New Film", savedFilm.getName());
-        assertEquals(2, savedFilm.getMpa().getId()); // PG
+        assertEquals(2, savedFilm.getMpa().getId());
         assertEquals(1, savedFilm.getGenres().size());
         assertEquals("Драма", savedFilm.getGenres().iterator().next().getName());
     }
@@ -122,14 +116,12 @@ class FilmServiceIntegrationTest {
 
     @Test
     void getPopularFilms_shouldReturnFilmsOrderedByLikes() {
-        // Создаем второй фильм с PG-13 (id=3)
         Film secondFilm = new Film();
         secondFilm.setName("Second Film");
         secondFilm.setMpa(entityManager.find(Mpa.class, 3));
         secondFilm.setGenres(Set.of(entityManager.find(Genre.class, 2)));
         entityManager.persist(secondFilm);
 
-        // Создаем второго пользователя
         User secondUser = new User();
         secondUser.setEmail("user2@example.com");
         secondUser.setLogin("userlogin2");
@@ -138,15 +130,14 @@ class FilmServiceIntegrationTest {
 
         entityManager.flush();
 
-        // Добавляем лайки
-        filmService.addLike(testFilm.getId(), testUser.getId()); // 1 лайк у testFilm
-        filmService.addLike(secondFilm.getId(), testUser.getId()); // 2 лайка у secondFilm
+        filmService.addLike(testFilm.getId(), testUser.getId());
+        filmService.addLike(secondFilm.getId(), testUser.getId());
         filmService.addLike(secondFilm.getId(), secondUser.getId());
 
         List<Film> popularFilms = filmService.getPopularFilms(2);
 
         assertEquals(2, popularFilms.size());
-        assertEquals(secondFilm.getId(), popularFilms.get(0).getId()); // Больше лайков
+        assertEquals(secondFilm.getId(), popularFilms.get(0).getId());
         assertEquals(testFilm.getId(), popularFilms.get(1).getId());
     }
 

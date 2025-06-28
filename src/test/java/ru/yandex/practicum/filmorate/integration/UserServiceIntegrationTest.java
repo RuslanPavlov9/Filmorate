@@ -39,13 +39,11 @@ class UserServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Очищаем данные перед каждым тестом
         entityManager.createNativeQuery("DELETE FROM friends").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM likes").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
         entityManager.flush();
 
-        // Создаем тестовых пользователей
         testUser1 = createTestUser("user1@example.com", "user1", "User One");
         testUser2 = createTestUser("user2@example.com", "user2", "User Two");
         testUser3 = createTestUser("user3@example.com", "user3", "User Three");
@@ -170,11 +168,9 @@ class UserServiceIntegrationTest {
 
     @Test
     void getCommonFriends_shouldReturnCommonFriends() {
-        // user1 дружит с user2 и user3
         userService.addFriend(testUser1.getId(), testUser2.getId());
         userService.addFriend(testUser1.getId(), testUser3.getId());
 
-        // user2 дружит с user3
         userService.addFriend(testUser2.getId(), testUser3.getId());
 
         List<User> commonFriends = userService.getCommonFriends(testUser1.getId(), testUser2.getId());
@@ -185,10 +181,8 @@ class UserServiceIntegrationTest {
 
     @Test
     void getCommonFriends_shouldReturnEmptyListWhenNoCommonFriends() {
-        // user1 дружит с user2
         userService.addFriend(testUser1.getId(), testUser2.getId());
 
-        // user3 не имеет общих друзей с user1
         List<User> commonFriends = userService.getCommonFriends(testUser1.getId(), testUser3.getId());
 
         assertTrue(commonFriends.isEmpty());

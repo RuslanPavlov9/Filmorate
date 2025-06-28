@@ -8,7 +8,6 @@ import java.util.List;
 
 public interface FilmRepository extends JpaRepository<Film, Integer> {
 
-    // Кастомный запрос для получения популярных фильмов
     @Query("SELECT f FROM Film f LEFT JOIN f.likes l GROUP BY f ORDER BY COUNT(l) DESC")
     List<Film> findPopularFilms(@Param("count") int count);
 }

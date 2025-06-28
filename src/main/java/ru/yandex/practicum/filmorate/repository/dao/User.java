@@ -39,11 +39,9 @@ public class User {
     private LocalDate birthday;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    //@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Friendship> friendships = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
-    //@OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private Set<Like> likes = new HashSet<>();
 
 }
