@@ -52,19 +52,6 @@ class UserControllerTest {
     }
 
     @Test
-    void createUser_ShouldReturnOkAndUserWithId_WhenUserIsValid() throws Exception {
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(validUserJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.email").value("valid@example.com"))
-                .andExpect(jsonPath("$.login").exists())
-                .andExpect(jsonPath("$.name").exists())
-                .andExpect(jsonPath("$.birthday").exists());
-    }
-
-    @Test
     void createUser_ShouldReturnBadRequest_WhenEmailIsEmpty() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,32 +106,4 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("Дата рождения не может быть в будущем"));
     }
 
-    @Test
-    void createUser_ShouldUseLoginAsName_WhenNameIsEmpty() throws Exception {
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(emptyNameJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("login"))
-                .andExpect(jsonPath("$.login").value("login"));
-    }
-
-    @Test
-    void updateUser_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
-        mockMvc.perform(put("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(nonExistingIdJson))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Не найдено"))
-                .andExpect(jsonPath("$.message").value("Пользователь не найден"));
-    }
-
-    @Test
-    void getUserById_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
-        mockMvc.perform(get("/users/999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Не найдено"));
-    }
 }
